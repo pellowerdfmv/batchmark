@@ -1,17 +1,21 @@
-"""Filtering utilities for TimingResult collections."""
+"""Filtering utilities for TimingResult lists."""
 
+from __future__ import annotations
+
+from dataclasses import dataclass, field
 from typing import List, Optional
+
 from batchmark.timer import TimingResult
 
 
-def filter_by_size(
-    results: List[TimingResult],
-    sizes: Optional[List[int]] = None,
-) -> List[TimingResult]:
-    """Return only results whose size is in *sizes*.
+@dataclass
+class FilterConfig:
+    sizes: List[int] = field(default_factory=list)
+    only_success: bool = False
+    max_duration: Optional[float] = None
 
-    If *sizes* is None or empty the original list is returned unchanged.
-    """
+
+def filter_by_size(results: List[TimingResult], sizes: List[int]) -> List[TimingResult]:
     if not sizes:
         return results
     size_set = set(sizes)
@@ -19,31 +23,21 @@ def filter_by_size(
 
 
 def filter_by_success(results: List[TimingResult]) -> List[TimingResult]:
-    """Return only results where the command exited with return-code 0."""
-    return [r for r in results if r.returncode == 0]
+    return [r for r in results if r.success]
 
 
 def filter_by_max_duration(
-    results: List[TimingResult],
-    max_seconds: float,
+    results: List[TimingResult], max_duration: float
 ) -> List[TimingResult]:
-    """Return only results whose elapsed time is <= *max_seconds*."""
-    return [r for r in results if r.elapsed <= max_seconds]
+    return [r for r in results if r.duration <= max_duration]
 
 
 def filter_results(
-    results: List[TimingResult],
-    *,
-    sizes: Optional[List[int]] = None,
-    only_success: bool = False,
-    max_duration: Optional[float] = None,
+    results: List[TimingResult], config: FilterConfig
 ) -> List[TimingResult]:
-    """Convenience wrapper that applies all active filters in sequence."""
-    out = results
-    if sizes:
-        out = filter_by_size(out, sizes)
-    if only_success:
+    out = filter_by_size(results, config.sizes)
+    if config.only_success:
         out = filter_by_success(out)
-    if max_duration is not None:
-        out = filter_by_max_duration(out, max_duration)
+    if config.max_duration is not None:
+        out = filter_by_max_duration(out, config.max_duration)
     return out
