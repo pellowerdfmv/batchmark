@@ -1,29 +1,49 @@
-"""CSV export for benchmark timing results."""
+"""Export TimingResults or AggregatedResults to CSV."""
 
 import csv
 import io
-from pathlib import Path
 from typing import List, Union
 
 from batchmark.timer import TimingResult
 
-FIELDS = ["command", "input_size", "elapsed_seconds", "returncode", "success"]
 
+def results_to_csv(results: List[TimingResult], file=None) -> str:
+    """Serialise a list of TimingResult to CSV.
 
-def results_to_csv(results: List[TimingResult], dest: Union[str, Path, None] = None) -> str:
-    """Serialize results to CSV. Writes to *dest* if provided, returns CSV string."""
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=FIELDS)
-    writer.writeheader()
+    If *file* is given the CSV is written there; the raw string is always
+    returned.
+    """
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["size", "duration", "returncode", "stdout", "stderr"])
     for r in results:
-        writer.writerow({
-            "command": r.command,
-            "input_size": r.input_size,
-            "elapsed_seconds": round(r.elapsed_seconds, 6),
-            "returncode": r.returncode,
-            "success": r.success,
-        })
-    csv_str = output.getvalue()
-    if dest is not None:
-        Path(dest).write_text(csv_str, encoding="utf-8")
-    return csv_str
+        writer.writerow([r.size, r.duration, r.returncode, r.stdout, r.stderr])
+    content = buf.getvalue()
+    if file is not None:
+        if isinstance(file, str):
+            with open(file, "w", newline="") as fh:
+                fh.write(content)
+        else:
+            file.write(content)
+    return content
+
+
+def aggregated_to_csv(rows, file=None) -> str:
+    """Serialise a list of AggregatedResult to CSV."""
+    from batchmark.aggregator import AggregatedResult  # local to avoid circular
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["size", "runs", "successful", "mean", "median", "stdev", "min", "max"])
+    for r in rows:
+        writer.writerow([r.size, r.runs, r.successful,
+                         round(r.mean, 6), round(r.median, 6),
+                         round(r.stdev, 6), round(r.min, 6), round(r.max, 6)])
+    content = buf.getvalue()
+    if file is not None:
+        if isinstance(file, str):
+            with open(file, "w", newline="") as fh:
+                fh.write(content)
+        else:
+            file.write(content)
+    return content
