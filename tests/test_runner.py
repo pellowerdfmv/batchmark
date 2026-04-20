@@ -65,3 +65,9 @@ def test_run_batch_invalid_runs_raises():
 def test_run_batch_empty_sizes_returns_empty():
     results = run_batch("echo {size}", sizes=[])
     assert results == []
+
+
+def test_run_batch_elapsed_time_is_positive():
+    """Each timing result should record a non-negative elapsed time."""
+    results = run_batch("echo {size}", sizes=[1, 2, 3], runs=2)
+    assert all(r.elapsed >= 0 for r in results)
