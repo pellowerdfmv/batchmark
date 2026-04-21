@@ -24,6 +24,11 @@ def test_build_command_unknown_placeholder_raises():
         build_command("echo {unknown}", 1)
 
 
+def test_build_command_multiple_size_placeholders():
+    """All occurrences of {size} should be substituted."""
+    assert build_command("echo {size} {size}", 7) == "echo 7 7"
+
+
 # ---------------------------------------------------------------------------
 # run_batch
 # ---------------------------------------------------------------------------
@@ -71,3 +76,10 @@ def test_run_batch_elapsed_time_is_positive():
     """Each timing result should record a non-negative elapsed time."""
     results = run_batch("echo {size}", sizes=[1, 2, 3], runs=2)
     assert all(r.elapsed >= 0 for r in results)
+
+
+def test_run_batch_results_ordered_by_size_then_run():
+    """Results should be ordered: all runs for size[0], then all runs for size[1], etc."""
+    results = run_batch("echo {size}", sizes=[4, 8], runs=2)
+    commands = [r.command for r in results]
+    assert commands == ["echo 4", "echo 4", "echo 8", "echo 8"]
