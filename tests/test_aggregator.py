@@ -50,6 +50,14 @@ def test_aggregate_min_max():
     assert rows[1].max == pytest.approx(6.0)
 
 
+def test_aggregate_min_max_ignores_failures():
+    # Size 100 has durations 1.0 and 2.0 as successes, 3.0 as failure.
+    # min/max should be computed only over successful runs.
+    rows = aggregate(RESULTS)
+    assert rows[0].min == pytest.approx(1.0)
+    assert rows[0].max == pytest.approx(2.0)
+
+
 def test_aggregate_empty():
     assert aggregate([]) == []
 
