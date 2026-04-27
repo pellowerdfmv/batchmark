@@ -18,6 +18,14 @@ class BucketConfig:
     thresholds: List[Tuple[float, str]] = field(default_factory=list)
     default_label: str = "slow"
 
+    def __post_init__(self) -> None:
+        for upper, label in self.thresholds:
+            if upper < 0:
+                raise ValueError(
+                    f"Threshold upper bound must be non-negative, got {upper!r} "
+                    f"for label {label!r}"
+                )
+
 
 @dataclass
 class BucketedResult:
