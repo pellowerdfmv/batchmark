@@ -94,3 +94,16 @@ def notify_all(
     for size in sorted(by_size):
         out.extend(check_results(by_size[size], config))
     return out
+
+
+def has_failures(notifications: List[Notification]) -> bool:
+    """Return True if any notification in *notifications* has level ``'fail'``.
+
+    Useful for callers that need to decide whether to exit with a non-zero
+    status after collecting all notifications::
+
+        notes = notify_all(results, config)
+        if has_failures(notes):
+            sys.exit(1)
+    """
+    return any(n.level == "fail" for n in notifications)
