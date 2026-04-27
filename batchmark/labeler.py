@@ -37,10 +37,19 @@ class LabelConfig:
 
 
 def _build_size_to_label(config: LabelConfig) -> Dict[int, str]:
-    """Invert the label_map so we can look up a label by size in O(1)."""
+    """Invert the label_map so we can look up a label by size in O(1).
+
+    Raises ValueError if the same size is assigned to more than one label,
+    since that would produce ambiguous results during labeling.
+    """
     mapping: Dict[int, str] = {}
     for label, sizes in config.label_map.items():
         for size in sizes:
+            if size in mapping:
+                raise ValueError(
+                    f"Size {size} is assigned to both '{mapping[size]}' and '{label}' "
+                    "in LabelConfig.label_map; each size must belong to at most one label."
+                )
             mapping[size] = label
     return mapping
 
