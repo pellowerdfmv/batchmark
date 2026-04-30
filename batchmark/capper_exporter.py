@@ -1,35 +1,37 @@
+"""CSV export for capped results."""
+
 from __future__ import annotations
 
 import csv
 import io
-from typing import List, Optional
+from typing import List
 
 from batchmark.capper import CappedResult
 
 
-def _fmt(value: Optional[float]) -> str:
+def _fmt(value: float | None) -> str:
     if value is None:
         return ""
-    return f"{value:.4f}"
+    return f"{value:.6f}"
 
 
 def capped_to_csv(results: List[CappedResult]) -> str:
-    """Serialise a list of CappedResult objects to a CSV string."""
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["size", "duration_ms", "success", "was_capped", "cap_limit_ms"])
+    """Serialise capped results to a CSV string."""
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["size", "duration_ms", "success", "was_capped", "original_duration_ms"])
     for r in results:
         writer.writerow([
             r.size,
-            _fmt(r.duration()),
-            int(r.success()),
+            _fmt(r.duration),
+            int(r.success),
             int(r.was_capped),
-            _fmt(r.cap_limit_ms),
+            _fmt(r.original_duration),
         ])
-    return output.getvalue()
+    return buf.getvalue()
 
 
 def capped_to_csv_file(results: List[CappedResult], path: str) -> None:
     """Write capped results as CSV to *path*."""
-    with open(path, "w", newline="", encoding="utf-8") as fh:
+    with open(path, "w", newline="") as fh:
         fh.write(capped_to_csv(results))
